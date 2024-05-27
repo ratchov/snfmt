@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "snfmt/snfmt.h"
+#include "snfmt.h"
 
 /*
  * Max number of args any function may take
