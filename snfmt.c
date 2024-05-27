@@ -305,15 +305,15 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 
 	while ((c = *ctx.fmt++) != 0) {
 
-		/*
-		 * Handle {xxx:%x} and %x
-		 */
+		/* number of available chars in the output buffer */
+		n = (p < end) ? end - p : 0;
+
 		switch (c) {
 		case '{':
 			f = snfmt_scanfunc(&ctx, arg);
 			if (f == NULL)
 				break;
-			p += f->func(p, (p < end) ? end - p : 0, arg);
+			p += f->func(p, n, arg);
 			continue;
 		case '%':
 			if (ctx.fmt[0] == '%') {
@@ -324,7 +324,6 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 			name[1] = snfmt_scanpct(&ctx, arg);
 			name[2] = 0;
 			f = snfmt_getfunc(name);
-			n = (p < end) ? end - p : 0;
 			if (f)
 				p += f->func(p, n, arg);
 			else {
@@ -370,7 +369,7 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 		/*
 		 * copy chars that are not conversion specifiers
 		 */
-		if (p < end)
+		if (n > 0)
 			*p = c;
 		p++;
 	}
