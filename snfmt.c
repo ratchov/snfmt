@@ -52,6 +52,49 @@ struct snfmt_func {
 struct snfmt_func *snfmt_func_list;
 
 /*
+ * Register the given conversion function.
+ *
+ * The first two arguments are the destination buffer and its size,
+ * the third arguments is the conversion specifier (c, d, u, x, p, or s)
+ * and the last argument is the value to convert. It's converted
+ * to union snfmt_arg by the caller.
+ */
+void
+snfmt_addfunc(size_t (*func)(char *, size_t, union snfmt_arg *), const char *name)
+{
+	struct snfmt_func *f;
+
+	f = malloc(sizeof(struct snfmt_func));
+	if (f == NULL)
+		return;
+
+	f->name = name;
+	f->func = func;
+	f->next = snfmt_func_list;
+	snfmt_func_list = f;
+}
+
+/*
+ * Unegisterer the given conversion function
+ */
+void
+snfmt_rmfunc(size_t (*func)(char *, size_t, union snfmt_arg *))
+{
+	struct snfmt_func *f, **pf;
+
+	pf = &snfmt_func_list;
+	for (;;) {
+		if ((f = *pf) == NULL)
+			return;
+		if (f->func == func)
+			break;
+		pf = &f->next;
+	}
+
+	*pf = f->next;
+	free(f);
+}
+/*
  * Find the function pointer corresponding to the given name
  */
 static struct snfmt_func *
@@ -340,48 +383,4 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 
 	va_end(ctx.ap);
 	return p - buf;
-}
-
-/*
- * Register the given conversion function.
- *
- * The first two arguments are the destination buffer and its size,
- * the third arguments is the conversion specifier (c, d, u, x, p, or s)
- * and the last argument is the value to convert. It's converted
- * to union snfmt_arg by the caller.
- */
-void
-snfmt_addfunc(size_t (*func)(char *, size_t, union snfmt_arg *), const char *name)
-{
-	struct snfmt_func *f;
-
-	f = malloc(sizeof(struct snfmt_func));
-	if (f == NULL)
-		return;
-
-	f->name = name;
-	f->func = func;
-	f->next = snfmt_func_list;
-	snfmt_func_list = f;
-}
-
-/*
- * Unegisterer the given conversion function
- */
-void
-snfmt_rmfunc(size_t (*func)(char *, size_t, union snfmt_arg *))
-{
-	struct snfmt_func *f, **pf;
-
-	pf = &snfmt_func_list;
-	for (;;) {
-		if ((f = *pf) == NULL)
-			return;
-		if (f->func == func)
-			break;
-		pf = &f->next;
-	}
-
-	*pf = f->next;
-	free(f);
 }
