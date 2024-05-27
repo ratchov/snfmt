@@ -373,11 +373,15 @@ snfmt_rmfunc(size_t (*func)(char *, size_t, union snfmt_arg *))
 {
 	struct snfmt_func *f, **pf;
 
-	for (pf = &snfmt_func_list; (f = *pf) != NULL; pf = &f->next) {
-		if (f->func == func) {
-			*pf = f->next;
-			free(f);
+	pf = &snfmt_func_list;
+	for (;;) {
+		if ((f = *pf) == NULL)
+			return;
+		if (f->func == func)
 			break;
-		}
+		pf = &f->next;
 	}
+
+	*pf = f->next;
+	free(f);
 }
