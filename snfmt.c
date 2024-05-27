@@ -312,13 +312,13 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 		case '{':
 			f = snfmt_scanfunc(&ctx, arg);
 			if (f == NULL)
-				break;
+				goto copy;
 			p += f->func(p, n, arg);
-			continue;
+			break;
 		case '%':
 			if (ctx.fmt[0] == '%') {
 				c = *ctx.fmt++;
-				break;
+				goto copy;
 			}
 			name[0] = '%';
 			name[1] = snfmt_scanpct(&ctx, arg);
@@ -360,18 +360,15 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 					break;
 				case 's':
 					p += snprintf(p, n, "%s", arg->s);
-					break;
 				}
 			}
-			continue;
+			break;
+		default:
+		copy:
+			if (n > 0)
+				*p = c;
+			p++;
 		}
-
-		/*
-		 * copy chars that are not conversion specifiers
-		 */
-		if (n > 0)
-			*p = c;
-		p++;
 	}
 
 	/*
