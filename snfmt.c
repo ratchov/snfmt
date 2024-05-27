@@ -50,78 +50,7 @@ struct snfmt_func {
 	struct snfmt_func *next;
 };
 
-/*
- * Default conversions functions, same as snprintf()
- */
-static size_t snfmt_builtin_c(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%c", (int)args[0].i);
-}
-
-static size_t snfmt_builtin_d(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%lld", args[0].i);
-}
-
-static size_t snfmt_builtin_u(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%llu", args[0].u);
-}
-
-static size_t snfmt_builtin_x(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%llx", args[0].i);
-}
-
-static size_t snfmt_builtin_o(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%llo", args[0].i);
-}
-
-static size_t snfmt_builtin_a(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%a", args[0].f);
-}
-
-static size_t snfmt_builtin_e(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%e", args[0].f);
-}
-
-static size_t snfmt_builtin_f(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%f", args[0].f);
-}
-
-static size_t snfmt_builtin_g(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%g", args[0].f);
-}
-
-static size_t snfmt_builtin_p(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%p", args[0].p);
-}
-
-static size_t snfmt_builtin_s(char *buf, size_t bufsz, union snfmt_arg *args)
-{
-	return snprintf(buf, bufsz, "%s", args[0].s);
-}
-
-struct snfmt_func snfmt_builtin[] = {
-	/* linked list of default conversion functions */
-	{"%c", snfmt_builtin_c, &snfmt_builtin[1]},
-	{"%d", snfmt_builtin_d, &snfmt_builtin[2]},
-	{"%u", snfmt_builtin_u, &snfmt_builtin[3]},
-	{"%x", snfmt_builtin_x, &snfmt_builtin[4]},
-	{"%o", snfmt_builtin_o, &snfmt_builtin[5]},
-	{"%a", snfmt_builtin_a, &snfmt_builtin[6]},
-	{"%e", snfmt_builtin_e, &snfmt_builtin[7]},
-	{"%f", snfmt_builtin_f, &snfmt_builtin[8]},
-	{"%g", snfmt_builtin_g, &snfmt_builtin[9]},
-	{"%p", snfmt_builtin_p, &snfmt_builtin[10]},
-	{"%s", snfmt_builtin_s, NULL},
-}, *snfmt_func_list = snfmt_builtin;
+struct snfmt_func *snfmt_func_list;
 
 /*
  * Find the function pointer corresponding to the given name
@@ -354,7 +283,45 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 			name[2] = 0;
 			f = snfmt_getfunc(name);
 			n = (p < end) ? end - p : 0;
-			p += f->func(p, n, arg);
+			if (f)
+				p += f->func(p, n, arg);
+			else {
+				switch (name[1]) {
+				case 'c':
+					p += snprintf(p, n, "%c", (int)arg->i);
+					break;
+				case 'd':
+					p += snprintf(p, n, "%lld", arg->i);
+					break;
+				case 'u':
+					p += snprintf(p, n, "%llu", arg->u);
+					break;
+				case 'x':
+					p += snprintf(p, n, "%llx", arg->i);
+					break;
+				case 'o':
+					p += snprintf(p, n, "%llo", arg->i);
+					break;
+				case 'a':
+					p += snprintf(p, n, "%a", arg->f);
+					break;
+				case 'e':
+					p += snprintf(p, n, "%e", arg->f);
+					break;
+				case 'f':
+					p += snprintf(p, n, "%f", arg->f);
+					break;
+				case 'g':
+					p += snprintf(p, n, "%g", arg->f);
+					break;
+				case 'p':
+					p += snprintf(p, n, "%p", arg->p);
+					break;
+				case 's':
+					p += snprintf(p, n, "%s", arg->s);
+					break;
+				}
+			}
 			continue;
 		}
 
