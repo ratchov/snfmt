@@ -94,6 +94,7 @@ snfmt_rmfunc(size_t (*func)(char *, size_t, union snfmt_arg *))
 	*pf = f->next;
 	free(f);
 }
+
 /*
  * Find the function pointer corresponding to the given name
  */
