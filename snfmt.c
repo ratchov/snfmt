@@ -112,7 +112,7 @@ snfmt_getfunc(const char *name)
 }
 
 /*
- * Parse characters after the '%': modifier followed by conversion character
+ * Parse the characters after '%': modifier followed by a conversion character
  * and convert the va_list argument to union snfmt_arg.
  */
 static int
@@ -166,7 +166,7 @@ snfmt_scanpct(struct snfmt_ctx *rctx, union snfmt_arg *rarg)
 	}
 
 	/*
-	 * convert argument to union snfmt_arg
+	 * convert the argument to union snfmt_arg
 	 */
 	switch (c) {
 	case 'c':
