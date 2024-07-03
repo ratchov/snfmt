@@ -133,7 +133,7 @@ snfmt_scanpct(struct snfmt_ctx *rctx, union snfmt_arg *rarg)
 	while (1) {
 		c = *fmt++;
 		if (c != ' ' && c != '#' && c != '+' && c != '-' &&
-		    c != '.' && (c < '0' || c > '9'))
+		    c != '.' && !(c >= '0' && c <= '9'))
 			break;
 	}
 
