@@ -121,22 +121,16 @@ snfmt_getfunc(const char *name)
  * and convert the va_list argument to union snfmt_arg.
  */
 static int
-snfmt_scanpct(struct snfmt_ctx *rctx, union snfmt_arg *rarg)
+snfmt_scanpct(struct snfmt_ctx *ctx, union snfmt_arg *arg)
 {
-	va_list ap;
-	const char *fmt;
-	union snfmt_arg arg;
 	size_t size;
 	int c;
-
-	va_copy(ap, rctx->ap);
-	fmt = rctx->fmt;
 
 	/*
 	 * skip common flags, width, and precision modifiers
 	 */
 	while (1) {
-		c = *fmt++;
+		c = *ctx->fmt++;
 		if (c != ' ' && c != '#' && c != '+' && c != '-' &&
 		    c != '.' && !(c >= '0' && c <= '9'))
 			break;
@@ -147,23 +141,23 @@ snfmt_scanpct(struct snfmt_ctx *rctx, union snfmt_arg *rarg)
 	 */
 	switch (c) {
 	case 'l':
-		c = *fmt++;
+		c = *ctx->fmt++;
 		if (c == 'l') {
-			c = *fmt++;
+			c = *ctx->fmt++;
 			size = sizeof(long long);
 		} else
 			size = sizeof(long);
 		break;
 	case 'j':
-		c = *fmt++;
+		c = *ctx->fmt++;
 		size = sizeof(intmax_t);
 		break;
 	case 't':
-		c = *fmt++;
+		c = *ctx->fmt++;
 		size = sizeof(ptrdiff_t);
 		break;
 	case 'z':
-		c = *fmt++;
+		c = *ctx->fmt++;
 		size = sizeof(size_t);
 		break;
 	default:
@@ -175,39 +169,33 @@ snfmt_scanpct(struct snfmt_ctx *rctx, union snfmt_arg *rarg)
 	 */
 	switch (c) {
 	case 'c':
-		arg.i = va_arg(ap, int);
+		arg->i = va_arg(ctx->ap, int);
 		break;
 	case 'd':
 	case 'u':
 	case 'x':
 	case 'o':
 		if (size == sizeof(int))
-			arg.i = va_arg(ap, int);
+			arg->i = va_arg(ctx->ap, int);
 		else if (size == sizeof(long))
-			arg.i = va_arg(ap, long);
+			arg->i = va_arg(ctx->ap, long);
 		else
-			arg.i = va_arg(ap, long long);
+			arg->i = va_arg(ctx->ap, long long);
 		break;
 	case 'a':
 	case 'e':
 	case 'f':
 	case 'g':
-		arg.f = va_arg(ap, double);
+		arg->f = va_arg(ctx->ap, double);
 		break;
 	case 's':
 	case 'p':
-		arg.p = va_arg(ap, void *);
+		arg->p = va_arg(ctx->ap, void *);
 		break;
 	default:
 		fprintf(stderr, "%s: %c: unsupported fmt\n", __func__, c);
 		abort();
 	}
-
-	*rarg = arg;
-	va_copy(rctx->ap, ap);
-	rctx->fmt = fmt;
-
-	va_end(ap);
 	return c;
 }
 
