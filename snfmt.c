@@ -292,9 +292,6 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 
 	while ((c = *ctx.fmt++) != 0) {
 
-		/* number of available chars in the output buffer */
-		n = (p < end) ? end - p : 0;
-
 		switch (c) {
 		case '{':
 			if (!snfmt_scanfunc(&ctx, name, arg))
@@ -304,7 +301,7 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 			if (f == NULL)
 				goto copy;
 
-			p += f->func(p, n, arg);
+			p += f->func(p, p < end ? end - p : 0, arg);
 			break;
 		case '%':
 			if (ctx.fmt[0] == '%') {
@@ -316,6 +313,7 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 			name[0] = '%';
 			name[1] = snfmt_scanpct(&ctx, arg);
 			name[2] = 0;
+			n = p < end ? end - p : 0;
 			f = snfmt_getfunc(name);
 			if (f)
 				p += f->func(p, n, arg);
@@ -333,7 +331,7 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 			break;
 		default:
 		copy:
-			if (n > 0)
+			if (p < end)
 				*p = c;
 			p++;
 		}
@@ -343,7 +341,7 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 	 * add terminating '\0'
 	 */
 	if (bufsz > 0)
-		*((p < end) ? p : end - 1) = 0;
+		*(p < end ? p : end - 1) = 0;
 
 	va_end(ctx.ap);
 	return p - buf;
