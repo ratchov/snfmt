@@ -348,7 +348,7 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 	 * add terminating '\0' only if there's enough space
 	 */
 	if (bufsz > 0)
-		*((p < end) ? p : buf + bufsz - 1) = 0;
+		*((p < end) ? p : end - 1) = 0;
 
 	va_end(ctx.ap);
 	return p - buf;
