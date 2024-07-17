@@ -91,7 +91,7 @@ size_t snfmt_uchar(char *buf, size_t bufsz, union snfmt_arg *args)
 void logx(const char *fmt, ...)
 {
 	va_list ap;
-	char buf[256];
+	char buf[64];
 
 	va_start(ap, fmt);
 	snfmt_va(buf, sizeof(buf), fmt, ap);
@@ -149,6 +149,9 @@ int main(void)
 
 	/* unicode chars */
 	logx("chars: %c (pi), %c (m acute), %c (chess queen)", 0x3c0, 0x1e3f, 0x1fa01);
+
+	/* truncated string */
+	logx("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
 
 	snfmt_rmfunc(snfmt_list);
 	snfmt_rmfunc(snfmt_point);
