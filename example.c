@@ -139,7 +139,7 @@ int main(void)
 	    NULL)));
 
 	/* prints: <Hello world!>, 10, 0xa */
-	logx("<%s>, %d, 0x%x 0%o", "Hello world!", 10, 10, 10);
+	logx("<%s>, %03d, 0x%02x 0%04o %.15g", "Hello world!", 10, 10, 10, 1. / 7);
 
 	/* prints: the first point is a(1,2) */
 	logx("the first point is {point:%p}", point_list);

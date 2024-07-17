@@ -32,6 +32,11 @@
 #define SNFMT_NAMEMAX		64
 
 /*
+ * Max size of the format string of a single snprintf() argument
+ */
+#define SNFMT_FMTMAX		32
+
+/*
  * We want the real function to be defined
  */
 #ifdef snfmt
@@ -295,10 +300,12 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 {
 	struct snfmt_ctx ctx;
 	struct snfmt_func *f;
-	char name[SNFMT_NAMEMAX];
 	union snfmt_arg arg[SNFMT_NARG];
+	char name[SNFMT_NAMEMAX], ofmt[SNFMT_FMTMAX];
 	char *p = buf, *end = buf + bufsz;
-	size_t n;
+	const char *ofp;
+	va_list oap;
+	size_t n, ofmtsize;
 	int c;
 
 	va_copy(ctx.ap, ap);
@@ -321,6 +328,8 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 				c = *ctx.fmt++;
 				goto copy;
 			}
+			ofp = ctx.fmt - 1;
+			va_copy(oap, ctx.ap);
 			name[0] = '%';
 			name[1] = snfmt_scanpct(&ctx, arg);
 			name[2] = 0;
@@ -328,41 +337,16 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 			if (f)
 				p += f->func(p, n, arg);
 			else {
-				switch (name[1]) {
-				case 'c':
-					p += snprintf(p, n, "%c", (int)arg->i);
-					break;
-				case 'd':
-					p += snprintf(p, n, "%lld", arg->i);
-					break;
-				case 'u':
-					p += snprintf(p, n, "%llu", arg->u);
-					break;
-				case 'x':
-					p += snprintf(p, n, "%llx", arg->i);
-					break;
-				case 'o':
-					p += snprintf(p, n, "%llo", arg->i);
-					break;
-				case 'a':
-					p += snprintf(p, n, "%a", arg->f);
-					break;
-				case 'e':
-					p += snprintf(p, n, "%e", arg->f);
-					break;
-				case 'f':
-					p += snprintf(p, n, "%f", arg->f);
-					break;
-				case 'g':
-					p += snprintf(p, n, "%g", arg->f);
-					break;
-				case 'p':
-					p += snprintf(p, n, "%p", arg->p);
-					break;
-				case 's':
-					p += snprintf(p, n, "%s", arg->s);
+				ofmtsize = ctx.fmt - ofp;
+				if (ofmtsize >= SNFMT_FMTMAX) {
+					fprintf(stderr, "%s: %s: too long\n", __func__, ofp);
+					abort();
 				}
+				memcpy(ofmt, ofp, ofmtsize);
+				ofmt[ofmtsize] = 0;
+				p += vsnprintf(p, n, ofmt, oap);
 			}
+			va_end(oap);
 			break;
 		default:
 		copy:
