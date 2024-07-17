@@ -42,9 +42,9 @@ void snfmt_rmfunc(size_t (*)(char *, size_t, union snfmt_arg *));
 #endif
 
 /*
- * MSVC has no attribute to enable arguments checks of printf-style
+ * MSVC has no attribute to enable argument checks of printf-style
  * functions. However it checks calls to the real snprintf(). So, we add an
- * unreachable call to snprintf(), on which MSVC performs the checks.
+ * unreachable call to snprintf() on which MSVC performs the checks.
  */
 #define snfmt(p, n, ...) \
 	(0 ? snprintf((p), (n), __VA_ARGS__) : snfmt((p), (n), __VA_ARGS__))
