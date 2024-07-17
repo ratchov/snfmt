@@ -60,9 +60,7 @@ struct snfmt_func *snfmt_func_list;
  * Register the given conversion function.
  *
  * The first two arguments are the destination buffer and its size,
- * the third arguments is the conversion specifier (c, d, u, x, p, or s)
- * and the last argument is the value to convert. It's converted
- * to union snfmt_arg by the caller.
+ * the last argument is the value to convert.
  */
 void
 snfmt_addfunc(size_t (*func)(char *, size_t, union snfmt_arg *), const char *name)
@@ -258,14 +256,11 @@ ctx_free:
  * Format the given string using snprintf(3)-style semantics, with the
  * following differences:
  *
- * - A custom conversion function may used by suffixing the conversion
- *   specifier with a tag between cruly braces (ex. "{foobar:%p}"). Any
- *   conversion function may be registered during initilization using
- *   the snfmt_addfunc() function.
+ * - A custom conversion function, registered with snfmt_addfunc(), may be
+ *   used with the {}-based syntax (ex. "{foobar:%p}").
  *
  * - Only the a, c, d, e, f, g, o, p, s, u, and x conversion specifiers
  *   are supported, possibly prefixed by a size modifier (l, ll, j, t, and z).
- *   No other snprintf(3)-style modifiers are supported.
  */
 size_t
 snfmt(char *buf, size_t bufsz, const char *fmt, ...)
@@ -345,7 +340,7 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 	}
 
 	/*
-	 * add terminating '\0' only if there's enough space
+	 * add terminating '\0'
 	 */
 	if (bufsz > 0)
 		*((p < end) ? p : end - 1) = 0;
