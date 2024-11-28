@@ -153,6 +153,11 @@ int main(void)
 	/* truncated string */
 	logx("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
 
+	/* unknown tag */
+	logx("{foobar:%s}", "hello!");
+
+	logx("{foobar}");
+
 	snfmt_rmfunc(snfmt_list);
 	snfmt_rmfunc(snfmt_point);
 

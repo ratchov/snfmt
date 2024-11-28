@@ -197,10 +197,11 @@ snfmt_scanpct(struct snfmt_ctx *ctx, union snfmt_arg *arg)
 /*
  * Parse conversion function name and arguments in curly braces
  */
-static int
+static struct snfmt_func *
 snfmt_scanfunc(struct snfmt_ctx *rctx, char *name, union snfmt_arg *arg)
 {
 	struct snfmt_ctx ctx;
+	struct snfmt_func *f;
 	size_t n = 0, index = 0;
 	int c;
 
@@ -240,13 +241,17 @@ found:
 	/* terminate the string */
 	name[n] = 0;
 
+	f = snfmt_getfunc(name);
+	if (f == NULL)
+		goto ctx_free;
+
 	va_copy(rctx->ap, ctx.ap);
 	rctx->fmt = ctx.fmt;
 	va_end(ctx.ap);
-	return 1;
+	return f;
 ctx_free:
 	va_end(ctx.ap);
-	return 0;
+	return NULL;
 }
 
 /*
@@ -285,10 +290,7 @@ snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
 
 		switch (c) {
 		case '{':
-			if (!snfmt_scanfunc(&ctx, name, arg))
-				goto copy;
-
-			f = snfmt_getfunc(name);
+			f = snfmt_scanfunc(&ctx, name, arg);
 			if (f == NULL)
 				goto copy;
 
