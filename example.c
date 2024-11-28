@@ -154,9 +154,7 @@ int main(void)
 	logx("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
 
 	/* unknown tag */
-	logx("{foobar:%s}", "hello!");
-
-	logx("{foobar}");
+	logx("{unknown:%s}", "hello!");
 
 	snfmt_rmfunc(snfmt_list);
 	snfmt_rmfunc(snfmt_point);
