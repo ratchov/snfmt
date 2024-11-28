@@ -47,6 +47,6 @@ void snfmt_rmfunc(size_t (*)(char *, size_t, union snfmt_arg *));
  * unreachable call to snprintf() on which MSVC performs the checks.
  */
 #define snfmt(p, n, ...) \
-	(0 ? snprintf((p), (n), __VA_ARGS__) : snfmt((p), (n), __VA_ARGS__))
+	(0 ? (size_t)snprintf((p), (n), __VA_ARGS__) : snfmt((p), (n), __VA_ARGS__))
 
 #endif
