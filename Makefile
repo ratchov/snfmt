@@ -7,10 +7,10 @@ example: $(OBJS)
 	$(CC) -o $@ $(OBJS)
 
 example.o: example.c snfmt.h
-	$(CC) $(CFLAGS) -I.. -c $<
+	$(CC) $(CFLAGS) -c $<
 
 snfmt.o: snfmt.c snfmt.h
-	$(CC) $(CFLAGS) -I.. -c $<
+	$(CC) $(CFLAGS) -c $<
 
 clean:
 	rm -f example $(OBJS)
