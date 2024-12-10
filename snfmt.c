@@ -208,11 +208,12 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 
 	while ((c = *ctx.fmt) != 0) {
 
+		n = p < end ? end - p : 0;
+
 		switch (c) {
 		case '{':
 			octx.fmt = ctx.fmt;
 			va_copy(octx.ap, ctx.ap);
-			n = p < end ? end - p : 0;
 
 			if (!snfmt_scanfunc(&ctx, name, arg) ||
 			    !(ret = func(p, n, name, arg))) {
@@ -232,7 +233,6 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 
 			octx.fmt = ctx.fmt;
 			va_copy(octx.ap, ctx.ap);
-			n = p < end ? end - p : 0;
 
 			snfmt_scanpct(&ctx, name, arg);
 
@@ -251,7 +251,7 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 			break;
 		default:
 		copy:
-			if (p < end)
+			if (n > 0)
 				*p = c;
 			p++;
 			ctx.fmt++;
