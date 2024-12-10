@@ -1,21 +1,26 @@
-# snfmt - safe and minimal snprintf-style formatted conversion
+# snfmt - extensible snprintf-like conversion
+
+## Description
+
+    snfmt(snfmt_func *func, char *buf, size_t size, const char *fmt, ...);
+    snfmt_va(snfmt_func *func, char *buf, size_t size, const char *fmt, va_list);
+
+The `snfmt()` function produces a string according to the given format,
+similarly to `snprintf()`. Custom conversions may be used between curly
+brackets. They are performed by the call-back function passed as the
+first `snfmt()` argument.
 
 Example:
 
     snfmt(myfunc, buf, size, "x = %d, ptr = {myobj:%p}", x, ptr);
     snfmt(myfunc, buf, size, "blob = {hexdump:%p,%u}", blob, sizeof(blob));
 
-The `snfmt()` function produces a string according to the given format,
-similar to `snprintf()`. It supports custom conversions through the
-call-back function given as its first argument.
+Custom conversion specifiers (ex. `"myobj:%p"`) are composed by a name,
+and an optional Colon followed by a comma-separated list of %-based
+specifiers.
 
-A user-registered conversion specifier (ex. `"{myobj:%p}"`) is composed
-by the conversion name, a collon, and the comma-separated list of
-specifiers used to fetch the function arguments from the `snfmt()` variable
-argument list.
-
-In the above example, the `myfunc` function is called by `snfmt` whenever
-a custom conversion needs to be performed.
+The call-back function is called by `snfmt()` whenever a custom
+conversion needs to be performed. Its prototype is as follows:
 
     union snfmt_arg {
             long long i;
@@ -25,31 +30,20 @@ a custom conversion needs to be performed.
             void *p;
     };
 
-    size_t myfunc(char *str, size_t size, const char *fmt, union snfmt_arg *args);
+    typedef size_t snfmt_func(char *buf, size_t size, const char *fmt, union snfmt_arg *arg);
 
-the `args` array contains a copy of the values fetched from the `snfmt()`
-arguments, they correspond to the specifiers list in the curly brakets.
-The `fmt` is set to the string between curly brakets with any
-modifier removed (ex. `%08llx` is replaced by `%x`). So `fmt` can be used
+The `arg` array contains a copy of the values fetched from the `snfmt()`
+variable argument list, they correspond to the specifiers list in the curly
+brackets. The `fmt` string is set to the string between curly brackets with
+the modifiers removed (ex. `%08llx` is replaced by `%x`). So `fmt` can be used
 inside `myfunc` to determine the conversion to perform.
 
-The %-specifiers define the argument type, while the {}-specifiers
-set the method to represent it as a string. Consequently, only
-the `%a`, `%c`, `%d`, `%e`, `%f`, `%g`, `%u`, `%x`, `%o`, `%p`, and `%s`
-conversion specifiers are needed and are the only supported ones.
-Integer specifiers may be prefixed by a size modifier (`l`, `ll`, `j`, `t`,
-and `z`). No other modifiers are supported, but a `{}`-based conversion
-may be defined to use any non-default width or precision. 
+As for `snprintf()`, `snfmt()` and the call-back function write at
+most `size - 1` characters to `buf`, followed by a terminating 0. If `size` is
+zero, no characters are written. The functions return the number of bytes that
+would have been output if `size` was unlimited.
 
-The format syntax makes any `snfmt()` format string also work
-with `snprintf()`.  Most compilers will generate the same errors if it
-detects a misuse (gcc, clang, and msvc do). If `snfmt()` is used for
-debug purposes only, it could be easily replaced by `snprintf()` in
-the final program version.
-
-As for `snprintf()`, above functions write at most `size - 1` characters
-to `str`, followed by a terminating 0. If `size` is zero, no
-characters are written.
+## Example
 
 Example (pseudo-code) of typical use:
 
@@ -83,3 +77,10 @@ Example (pseudo-code) of typical use:
 
             ...
     }
+
+## Restrictions
+
+Argument indexes (ex. `5$`) are not supported. Width or precision
+may not be passed as arguments with the `*` character. Wide characters
+are not supported. `%A`, `%D`, `%E`, `%F`, `%G`, `%O`, `%S` `%U`, `%X`,
+and `%n` are not supported.
