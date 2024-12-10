@@ -28,14 +28,14 @@ union snfmt_arg {
 	void *p;
 };
 
+typedef size_t snfmt_func(char *, size_t, const char *, union snfmt_arg *);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-size_t snfmt(char *, size_t, const char *, ...);
-size_t snfmt_va(char *, size_t, const char *, va_list);
-void snfmt_addfunc(size_t (*)(char *, size_t, union snfmt_arg *), const char *);
-void snfmt_rmfunc(size_t (*)(char *, size_t, union snfmt_arg *));
+size_t snfmt(snfmt_func *, char *, size_t, const char *, ...);
+size_t snfmt_va(snfmt_func *, char *, size_t, const char *, va_list);
 
 #ifdef __cplusplus
 }
@@ -46,7 +46,7 @@ void snfmt_rmfunc(size_t (*)(char *, size_t, union snfmt_arg *));
  * functions. However it checks calls to the real snprintf(). So, we add an
  * unreachable call to snprintf() on which MSVC performs the checks.
  */
-#define snfmt(p, n, ...) \
-	(0 ? (size_t)snprintf((p), (n), __VA_ARGS__) : snfmt((p), (n), __VA_ARGS__))
+#define snfmt(cb, p, n, ...) \
+	(0 ? (size_t)snprintf((p), (n), __VA_ARGS__) : snfmt((cb), (p), (n), __VA_ARGS__))
 
 #endif

@@ -34,23 +34,21 @@ struct point {
 /*
  * convert a point structure to a string
  */
-size_t snfmt_point(char *buf, size_t size, union snfmt_arg *args)
+size_t point_fmt(char *buf, size_t size, struct point *p)
 {
-	struct point *p = args[0].p;
-
 	return snprintf(buf, size, "%s(%d,%d)", p->name, p->x, p->y);
 }
 
 /*
  * convert a linked list of point structures to string
  */
-size_t snfmt_list(char *buf, size_t size, union snfmt_arg *args)
+size_t list_fmt(char *buf, size_t size, struct point *list)
 {
 	char *s = buf, *end = buf + size;
 	struct point *p;
 
-	for (p = args[0].p; p != NULL; p = p->next)
-		s += snfmt(s, (s >= end) ? 0 : end - s, "{point:%p} ", p);
+	for (p = list; p != NULL; p = p->next)
+		s += point_fmt(s, (s >= end) ? 0 : end - s, p);
 
 	return s - buf;
 }
@@ -58,10 +56,9 @@ size_t snfmt_list(char *buf, size_t size, union snfmt_arg *args)
 /*
  * same as %c, but with unicode allowed
  */
-size_t snfmt_uchar(char *buf, size_t bufsz, union snfmt_arg *args)
+size_t uchar_fmt(char *buf, size_t bufsz, int c)
 {
 	char ustr[8], *p = ustr;
-	int c = args[0].i;
 
 	if ((c > 0xd7ff && c < 0xe000) || c > 0x10ffff)
 		return 0;
@@ -85,6 +82,17 @@ size_t snfmt_uchar(char *buf, size_t bufsz, union snfmt_arg *args)
 	return snprintf(buf, bufsz, "%s", ustr);
 }
 
+size_t fmt_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
+{
+	if (strcmp(fmt, "point:%p") == 0)
+		return point_fmt(buf, size, args[0].p);
+	if (strcmp(fmt, "list:%p") == 0)
+		return list_fmt(buf, size, args[0].p);
+	if (strcmp(fmt, "%c") == 0)
+		return uchar_fmt(buf, size, args[0].i);
+	return 0;
+}
+
 /*
  * log on stderr using snfmt()
  */
@@ -94,7 +102,7 @@ void logx(const char *fmt, ...)
 	char buf[64];
 
 	va_start(ap, fmt);
-	snfmt_va(buf, sizeof(buf), fmt, ap);
+	snfmt_va(fmt_cb, buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
 	fprintf(stderr, "%s\n", buf);
@@ -125,11 +133,6 @@ int main(void)
 {
 	struct point *point_list;
 
-	/* register handlers */
-	snfmt_addfunc(snfmt_point, "point:%p");
-	snfmt_addfunc(snfmt_list, "list:%p");
-	snfmt_addfunc(snfmt_uchar, "%c");
-
 	/*
 	 * create a simple linked list with 3 elements
 	 */
@@ -148,16 +151,14 @@ int main(void)
 	logx("the list of points is {list:%p}", point_list);
 
 	/* unicode chars */
-	logx("chars: %c (pi), %c (m acute), %c (chess queen)", 0x3c0, 0x1e3f, 0x1fa01);
+	logx("chars: %% (pct), %c (pi), %c (m acute), %c (chess queen)", 0x3c0, 0x1e3f, 0x1fa01);
 
 	/* truncated string */
 	logx("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
 
 	/* unknown tag */
 	logx("{unknown:%s}", "hello!");
-
-	snfmt_rmfunc(snfmt_list);
-	snfmt_rmfunc(snfmt_point);
+	logx("{unknown}");
 
 	return 0;
 }

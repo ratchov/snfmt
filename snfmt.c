@@ -48,78 +48,18 @@ struct snfmt_ctx {
 	va_list ap;
 };
 
-struct snfmt_func {
-	const char *name;
-	size_t (*func)(char *, size_t, union snfmt_arg *);
-	struct snfmt_func *next;
-};
-
-struct snfmt_func *snfmt_func_list;
-
 /*
- * Register the given conversion function.
- */
-void
-snfmt_addfunc(size_t (*func)(char *, size_t, union snfmt_arg *), const char *name)
-{
-	struct snfmt_func *f;
-
-	f = malloc(sizeof(struct snfmt_func));
-	if (f == NULL)
-		return;
-
-	f->name = name;
-	f->func = func;
-	f->next = snfmt_func_list;
-	snfmt_func_list = f;
-}
-
-/*
- * Unegisterer the given conversion function
- */
-void
-snfmt_rmfunc(size_t (*func)(char *, size_t, union snfmt_arg *))
-{
-	struct snfmt_func *f, **pf;
-
-	pf = &snfmt_func_list;
-	for (;;) {
-		if ((f = *pf) == NULL)
-			return;
-		if (f->func == func)
-			break;
-		pf = &f->next;
-	}
-
-	*pf = f->next;
-	free(f);
-}
-
-/*
- * Find the function pointer corresponding to the given name
- */
-static struct snfmt_func *
-snfmt_getfunc(const char *name)
-{
-	struct snfmt_func *f = NULL;
-
-	for (f = snfmt_func_list; f != NULL; f = f->next) {
-		if (strcmp(f->name, name) == 0)
-			return f;
-	}
-
-	return NULL;
-}
-
-/*
- * Parse the characters after '%': modifier followed by a conversion character
- * and convert the va_list argument to union snfmt_arg.
+ * Parse a %-based conversion specifier and convert its va_list argument
+ * to union snfmt_arg. Return the number of chars produced in 'name'.
  */
 static int
-snfmt_scanpct(struct snfmt_ctx *ctx, union snfmt_arg *arg)
+snfmt_scanpct(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 {
 	size_t size;
 	int c;
+
+	/* skip leading '%' */
+	ctx->fmt++;
 
 	/*
 	 * skip common flags, width, and precision modifiers
@@ -191,31 +131,35 @@ snfmt_scanpct(struct snfmt_ctx *ctx, union snfmt_arg *arg)
 		fprintf(stderr, "%s: %c: unsupported fmt\n", __func__, c);
 		abort();
 	}
-	return c;
+
+	name[0] = '%';
+	name[1] = c;
+	name[2] = 0;
+	return 2;
 }
 
 /*
  * Parse conversion function name and arguments in curly braces
  */
-static struct snfmt_func *
-snfmt_scanfunc(struct snfmt_ctx *rctx, char *name, union snfmt_arg *arg)
+static int
+snfmt_scanfunc(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 {
-	struct snfmt_ctx ctx;
-	struct snfmt_func *f;
 	size_t n = 0, index = 0;
 	int c;
 
-	va_copy(ctx.ap, rctx->ap);
-	ctx.fmt = rctx->fmt;
+	/* skip leading '{' */
+	ctx->fmt++;
 
 	/*
 	 * copy up to the ':' char
 	 */
 	do {
-		if ((c = *ctx.fmt++) == 0 || n == SNFMT_NAMEMAX - 1)
-			goto ctx_free;
-		if (c == '}')
-			goto found;
+		if ((c = *ctx->fmt++) == 0 || n == SNFMT_NAMEMAX - 1)
+			return 0;
+		if (c == '}') {
+			name[n] = 0;
+			return 1;
+		}
 		name[n++] = c;
 	} while (c != ':');
 
@@ -223,35 +167,14 @@ snfmt_scanfunc(struct snfmt_ctx *rctx, char *name, union snfmt_arg *arg)
 	 * copy %<conv_char>[,%<conv_char>]...
 	 */
 	while (1) {
-		if ((c = *ctx.fmt++) != '%' || n == SNFMT_NAMEMAX - 1)
-			goto ctx_free;
-		name[n++] = c;
-		if (index == SNFMT_NARG || n == SNFMT_NAMEMAX - 1)
-			goto ctx_free;
-		name[n++] = snfmt_scanpct(&ctx, arg + index++);
-
-		if ((c = *ctx.fmt++) == '}')
-			break;
-		if (c != ',' || n == SNFMT_NAMEMAX - 1)
-			goto ctx_free;
-		name[n++] = c;
+		if (n >= SNFMT_NAMEMAX - 3 || index == SNFMT_NARG || *ctx->fmt != '%')
+			return 0;
+		n += snfmt_scanpct(ctx, name + n, arg + index++);
+		if ((c = *ctx->fmt++) == '}')
+			return 1;
+		if (c != ',')
+			return 0;
 	}
-
-found:
-	/* terminate the string */
-	name[n] = 0;
-
-	f = snfmt_getfunc(name);
-	if (f == NULL)
-		goto ctx_free;
-
-	va_copy(rctx->ap, ctx.ap);
-	rctx->fmt = ctx.fmt;
-	va_end(ctx.ap);
-	return f;
-ctx_free:
-	va_end(ctx.ap);
-	return NULL;
 }
 
 /*
@@ -259,74 +182,79 @@ ctx_free:
  * {}-based extensions (ex. "{foobar:%p}").
  */
 size_t
-snfmt(char *buf, size_t bufsz, const char *fmt, ...)
+snfmt(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, ...)
 {
 	va_list ap;
 	size_t len;
 
 	va_start(ap, fmt);
-	len = snfmt_va(buf, bufsz, fmt, ap);
+	len = snfmt_va(func, buf, bufsz, fmt, ap);
 	va_end(ap);
 	return len;
 }
 
 size_t
-snfmt_va(char *buf, size_t bufsz, const char *fmt, va_list ap)
+snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 {
-	struct snfmt_ctx ctx;
-	struct snfmt_func *f;
+	struct snfmt_ctx ctx, octx;
 	union snfmt_arg arg[SNFMT_NARG];
 	char name[SNFMT_NAMEMAX], ofmt[SNFMT_FMTMAX];
 	char *p = buf, *end = buf + bufsz;
-	const char *ofp;
-	va_list oap;
-	size_t n, ofmtsize;
+	size_t n, ofmtsize, ret;
 	int c;
 
 	va_copy(ctx.ap, ap);
 	ctx.fmt = fmt;
 
-	while ((c = *ctx.fmt++) != 0) {
+	while ((c = *ctx.fmt) != 0) {
 
 		switch (c) {
 		case '{':
-			f = snfmt_scanfunc(&ctx, name, arg);
-			if (f == NULL)
-				goto copy;
+			octx.fmt = ctx.fmt;
+			va_copy(octx.ap, ctx.ap);
+			n = p < end ? end - p : 0;
 
-			p += f->func(p, p < end ? end - p : 0, arg);
+			if (!snfmt_scanfunc(&ctx, name, arg) ||
+			    !(ret = func(p, n, name, arg))) {
+				ctx.fmt = octx.fmt;
+				va_copy(ctx.ap, octx.ap);
+				va_end(octx.ap);
+				goto copy;
+			}
+			p += ret;
+			va_end(octx.ap);
 			break;
 		case '%':
-			if (ctx.fmt[0] == '%') {
-				c = *ctx.fmt++;
+			if (ctx.fmt[1] == '%') {
+				ctx.fmt++;
 				goto copy;
 			}
-			ofp = ctx.fmt - 1;
-			va_copy(oap, ctx.ap);
-			name[0] = '%';
-			name[1] = snfmt_scanpct(&ctx, arg);
-			name[2] = 0;
+
+			octx.fmt = ctx.fmt;
+			va_copy(octx.ap, ctx.ap);
 			n = p < end ? end - p : 0;
-			f = snfmt_getfunc(name);
-			if (f)
-				p += f->func(p, n, arg);
-			else {
-				ofmtsize = ctx.fmt - ofp;
+
+			snfmt_scanpct(&ctx, name, arg);
+
+			if (!(ret = func(p, n, name, arg))) {
+				ofmtsize = ctx.fmt - octx.fmt;
 				if (ofmtsize >= SNFMT_FMTMAX) {
-					fprintf(stderr, "%s: %s: too long\n", __func__, ofp);
+					fprintf(stderr, "%s: %s: too long\n", __func__, octx.fmt);
 					abort();
 				}
-				memcpy(ofmt, ofp, ofmtsize);
+				memcpy(ofmt, octx.fmt, ofmtsize);
 				ofmt[ofmtsize] = 0;
-				p += vsnprintf(p, n, ofmt, oap);
+				ret = vsnprintf(p, n, ofmt, octx.ap);
 			}
-			va_end(oap);
+			p += ret;
+			va_end(octx.ap);
 			break;
 		default:
 		copy:
 			if (p < end)
 				*p = c;
 			p++;
+			ctx.fmt++;
 		}
 	}
 
