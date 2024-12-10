@@ -23,34 +23,20 @@
 #include "snfmt.h"
 
 /*
- * linked list element with simple data
+ * convert binary blob
  */
-struct point {
-	struct point *next;
-	const char *name;
-	int x, y;
-};
-
-/*
- * convert a point structure to a string
- */
-size_t point_fmt(char *buf, size_t size, struct point *p)
+size_t hexdump_fmt(char *buf, size_t size, unsigned char *blob, size_t blob_size)
 {
-	return snprintf(buf, size, "%s(%d,%d)", p->name, p->x, p->y);
-}
+	char *p = buf, *end = buf + size;
+	const char *sep = "";
+	int i;
 
-/*
- * convert a linked list of point structures to string
- */
-size_t list_fmt(char *buf, size_t size, struct point *list)
-{
-	char *s = buf, *end = buf + size;
-	struct point *p;
+	for (i = 0; i < blob_size; i++) {
+		p += snprintf(p, p < end ? end - p : 0, "%s%02x", sep, blob[i]);
+		sep = ", ";
+	}
 
-	for (p = list; p != NULL; p = p->next)
-		s += point_fmt(s, (s >= end) ? 0 : end - s, p);
-
-	return s - buf;
+	return p - buf;
 }
 
 /*
@@ -84,10 +70,8 @@ size_t uchar_fmt(char *buf, size_t bufsz, int c)
 
 size_t fmt_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
 {
-	if (strcmp(fmt, "point:%p") == 0)
-		return point_fmt(buf, size, args[0].p);
-	if (strcmp(fmt, "list:%p") == 0)
-		return list_fmt(buf, size, args[0].p);
+	if (strcmp(fmt, "hexdump:%p,%u") == 0)
+		return hexdump_fmt(buf, size, args[0].p, args[1].u);
 	if (strcmp(fmt, "%c") == 0)
 		return uchar_fmt(buf, size, args[0].i);
 	return 0;
@@ -108,47 +92,15 @@ void logx(const char *fmt, ...)
 	fprintf(stderr, "%s\n", buf);
 }
 
-/*
- * create a linked list of point structures
- */
-struct point *point_new(const char *name, int x, int y, struct point *next)
-{
-	struct point *p;
-
-	p = malloc(sizeof(struct point));
-	if (p == NULL) {
-		perror("malloc");
-		exit(1);
-	}
-
-	p->x = x;
-	p->y = y;
-	p->name = name;
-	p->next = next;
-
-	return p;
-}
-
 int main(void)
 {
-	struct point *point_list;
-
-	/*
-	 * create a simple linked list with 3 elements
-	 */
-	point_list = point_new("a", 1, 2,
-	    point_new("c", 3, 4,
-	    point_new("d", 5, 6,
-	    NULL)));
+	unsigned char blob[] = {0xaa, 0xbb, 0xcc, 0xcc};
 
 	/* prints: <Hello world!>, 10, 0xa */
 	logx("<%s>, %03d, 0x%02x 0%04o %.15g", "Hello world!", 10, 10, 10, 1. / 7);
 
 	/* prints: the first point is a(1,2) */
-	logx("the first point is {point:%p}", point_list);
-
-	/* prints: the list of points is a(1,2) c(3,4) d(5,6) */
-	logx("the list of points is {list:%p}", point_list);
+	logx("blob: {hexdump:%p,%zu}", blob, sizeof(blob));
 
 	/* unicode chars */
 	logx("chars: %% (pct), %c (pi), %c (m acute), %c (chess queen)", 0x3c0, 0x1e3f, 0x1fa01);
