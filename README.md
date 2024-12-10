@@ -2,9 +2,6 @@
 
 ## Description
 
-    snfmt(snfmt_func *func, char *buf, size_t size, const char *fmt, ...);
-    snfmt_va(snfmt_func *func, char *buf, size_t size, const char *fmt, va_list);
-
 The `snfmt()` function produces a string according to the given format,
 similarly to `snprintf()`. Custom conversions may be used between curly
 brackets. They are performed by the call-back function passed as the
@@ -30,7 +27,7 @@ conversion needs to be performed. Its prototype is as follows:
             void *p;
     };
 
-    typedef size_t snfmt_func(char *buf, size_t size, const char *fmt, union snfmt_arg *arg);
+    size_t myfunc(char *buf, size_t size, const char *fmt, union snfmt_arg *arg);
 
 The `arg` array contains a copy of the values fetched from the `snfmt()`
 variable argument list, they correspond to the specifiers list in the curly
