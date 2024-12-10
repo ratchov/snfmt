@@ -196,66 +196,62 @@ snfmt(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, ...)
 size_t
 snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 {
-	struct snfmt_ctx ctx, octx;
+	struct snfmt_ctx ctx;
 	union snfmt_arg arg[SNFMT_NARG];
 	char name[SNFMT_NAMEMAX], ofmt[SNFMT_FMTMAX];
 	char *p = buf, *end = buf + bufsz;
 	size_t n, ofmtsize, ret;
 	int c;
 
-	va_copy(ctx.ap, ap);
-	ctx.fmt = fmt;
+	while ((c = *fmt) != 0) {
 
-	while ((c = *ctx.fmt) != 0) {
+		switch (c) {
+		case '{':
+			break;
+		case '%':
+			if (fmt[1] != '%')
+				break;
+			fmt++;
+			/* FALLTHROUGH */
+		default:
+		copy_and_continue:
+			if (p < end)
+				*p = c;
+			p++;
+			fmt++;
+			continue;
+		}
 
+		ctx.fmt = fmt;
+		va_copy(ctx.ap, ap);
 		n = p < end ? end - p : 0;
 
 		switch (c) {
 		case '{':
-			octx.fmt = ctx.fmt;
-			va_copy(octx.ap, ctx.ap);
-
-			if (!snfmt_scanfunc(&ctx, name, arg) ||
-			    !(ret = func(p, n, name, arg))) {
-				ctx.fmt = octx.fmt;
-				va_copy(ctx.ap, octx.ap);
-				va_end(octx.ap);
-				goto copy;
+			if (snfmt_scanfunc(&ctx, name, arg)) {
+				if ((ret = func(p, n, name, arg)))
+					break;
 			}
-			p += ret;
-			va_end(octx.ap);
-			break;
+			va_end(ctx.ap);
+			goto copy_and_continue;
 		case '%':
-			if (ctx.fmt[1] == '%') {
-				ctx.fmt++;
-				goto copy;
-			}
-
-			octx.fmt = ctx.fmt;
-			va_copy(octx.ap, ctx.ap);
-
 			snfmt_scanpct(&ctx, name, arg);
-
-			if (!(ret = func(p, n, name, arg))) {
-				ofmtsize = ctx.fmt - octx.fmt;
-				if (ofmtsize >= SNFMT_FMTMAX) {
-					fprintf(stderr, "%s: %s: too long\n", __func__, octx.fmt);
-					abort();
-				}
-				memcpy(ofmt, octx.fmt, ofmtsize);
-				ofmt[ofmtsize] = 0;
-				ret = vsnprintf(p, n, ofmt, octx.ap);
+			if ((ret = func(p, n, name, arg)))
+				break;
+			ofmtsize = ctx.fmt - fmt;
+			if (ofmtsize >= SNFMT_FMTMAX) {
+				fprintf(stderr, "%s: %s: too long\n", __func__, fmt);
+				abort();
 			}
-			p += ret;
-			va_end(octx.ap);
-			break;
-		default:
-		copy:
-			if (n > 0)
-				*p = c;
-			p++;
-			ctx.fmt++;
+			memcpy(ofmt, fmt, ofmtsize);
+			ofmt[ofmtsize] = 0;
+			ret = vsnprintf(p, n, ofmt, ap);
 		}
+
+		p += ret;
+		fmt = ctx.fmt;
+		va_copy(ap, ctx.ap);
+		va_end(ctx.ap);
 	}
 
 	/*
@@ -264,6 +260,5 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 	if (bufsz > 0)
 		*(p < end ? p : end - 1) = 0;
 
-	va_end(ctx.ap);
 	return p - buf;
 }
