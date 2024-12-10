@@ -157,8 +157,7 @@ int main(void)
 	logx("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
 
 	/* unknown tag */
-	logx("{unknown:%s}", "hello!");
-	logx("{unknown}");
+	logx("{unknown}, {unknown:%s}", "hello!");
 
 	return 0;
 }
