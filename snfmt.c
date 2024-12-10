@@ -172,8 +172,9 @@ snfmt_scanfunc(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 		n += snfmt_scanpct(ctx, name + n, arg + index++);
 		if ((c = *ctx->fmt++) == '}')
 			return 1;
-		if (c != ',')
+		if (c != ',' || n >= SNFMT_NAMEMAX)
 			return 0;
+		name[n++] = c;
 	}
 }
 
