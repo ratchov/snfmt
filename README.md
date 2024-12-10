@@ -13,7 +13,7 @@ Example:
     snfmt(myfunc, buf, size, "blob = {hexdump:%p,%u}", blob, sizeof(blob));
 
 Custom conversion specifiers (ex. `"myobj:%p"`) are composed by a name,
-and an optional Colon followed by a comma-separated list of %-based
+and an optional colon followed by a comma-separated list of %-based
 specifiers.
 
 The call-back function is called by `snfmt()` whenever a custom
