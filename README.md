@@ -42,6 +42,11 @@ most `size - 1` characters to `buf`, followed by a terminating 0. If `size` is
 zero, no characters are written. The functions return the number of bytes that
 would have been output if `size` was unlimited.
 
+## Limitations
+
+Argument reordering (a.k.a `<number>$` immediately after the `%` character) is
+not supported.
+
 ## Example
 
 Example (pseudo-code) of typical use:
@@ -76,8 +81,3 @@ Example (pseudo-code) of typical use:
 
                 ...
         }
-
-## Limitations
-
-Argument reordering (a.k.a `<number>$` immediately after the `%` character) is
-not supported.
