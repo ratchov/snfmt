@@ -131,8 +131,10 @@ snfmt_scanpct(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 		arg->i = va_arg(ctx->ap, int);
 		break;
 	case 'd':
+	case 'i':
 	case 'u':
 	case 'x':
+	case 'X':
 	case 'o':
 		if (size == sizeof(int))
 			arg->i = va_arg(ctx->ap, int);
@@ -142,9 +144,13 @@ snfmt_scanpct(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 			arg->i = va_arg(ctx->ap, long long);
 		break;
 	case 'a':
+	case 'A':
 	case 'e':
+	case 'E':
 	case 'f':
+	case 'F':
 	case 'g':
+	case 'G':
 		arg->f = va_arg(ctx->ap, double);
 		break;
 	case 's':
