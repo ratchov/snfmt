@@ -10,7 +10,7 @@ user-provided call-back function that implements the conversions.
 Examples:
 
         snfmt(myfunc, buf, size, "x = %d, ptr = {myobj:%p}", x, ptr);
-        snfmt(myfunc, buf, size, "blob = {hexdump:%p,%u}", blob, sizeof(blob));
+        snfmt(myfunc, buf, size, "blob = {hexdump:%p,%zu}", blob, sizeof(blob));
 
 The user-defined conversion specifiers in the format strings are between
 curly brackets. They are composed by a name, and an optional colon followed
