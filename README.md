@@ -49,6 +49,9 @@ would have been output if `size` was unlimited.
 Argument reordering (a.k.a `<number>$` immediately after the `%` character) is
 not supported.
 
+Non-standard `%`-specifiers are not supported (ex. `%D`, `%O`, `%C`, `%S` and
+probably others).
+
 ## Example
 
 Example (pseudo-code) of typical use:
