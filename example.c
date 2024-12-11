@@ -92,6 +92,9 @@ void logx(const char *fmt, ...)
 	fprintf(stderr, "%s\n", buf);
 }
 
+#define logx(...) \
+	(0 ? (void)snprintf(NULL, 0, ## __VA_ARGS__) : logx(__VA_ARGS__))
+
 int main(void)
 {
 	unsigned char blob[] = {0xaa, 0xbb, 0xcc, 0xcc};
