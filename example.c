@@ -25,7 +25,7 @@
 /*
  * convert binary blob
  */
-size_t hexdump_fmt(char *buf, size_t size, unsigned char *blob, size_t blob_size)
+static size_t hexdump_fmt(char *buf, size_t size, unsigned char *blob, size_t blob_size)
 {
 	char *p = buf, *end = buf + size;
 	const char *sep = "";
@@ -42,7 +42,7 @@ size_t hexdump_fmt(char *buf, size_t size, unsigned char *blob, size_t blob_size
 /*
  * same as %c, but with unicode allowed
  */
-size_t uchar_fmt(char *buf, size_t bufsz, int c)
+static size_t uchar_fmt(char *buf, size_t bufsz, int c)
 {
 	char ustr[8], *p = ustr;
 
@@ -68,7 +68,7 @@ size_t uchar_fmt(char *buf, size_t bufsz, int c)
 	return snprintf(buf, bufsz, "%s", ustr);
 }
 
-size_t fmt_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
+static size_t fmt_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
 {
 	if (strcmp(fmt, "hexdump:%p,%u") == 0)
 		return hexdump_fmt(buf, size, args[0].p, args[1].u);
@@ -80,7 +80,7 @@ size_t fmt_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
 /*
  * log on stderr using snfmt()
  */
-void logx(const char *fmt, ...)
+static void logx(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[64];
