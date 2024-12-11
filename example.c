@@ -114,5 +114,11 @@ int main(void)
 	/* unknown tag */
 	logx("{unknown}, {unknown:%s}", "hello!");
 
+	/* bad */
+	logx("bad fmt: %y, {hexdump:%y} %d", 123);
+
+	/* overflow */
+	logx("oveflow %000000000000000000000000000000d, %d", 1, 123);
+
 	return 0;
 }

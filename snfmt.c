@@ -167,17 +167,17 @@ snfmt_scanpct(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 		break;
 	case 's':
 	case 'p':
+	case 'n':
 		arg->p = va_arg(ctx->ap, void *);
 		break;
 	default:
-		fprintf(stderr, "%s: %c: unsupported fmt\n", __func__, c);
-		abort();
+		return 0;
 	}
 
 	name[0] = '%';
 	name[1] = c;
 	name[2] = 0;
-	return 2;
+	return 1;
 }
 
 /*
@@ -211,7 +211,10 @@ snfmt_scanfunc(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 	while (1) {
 		if (n >= SNFMT_NAMEMAX - 3 || index == SNFMT_NARG || *ctx->fmt != '%')
 			return 0;
-		n += snfmt_scanpct(ctx, name + n, arg + index++);
+		if (!snfmt_scanpct(ctx, name + n, arg + index))
+			return 0;
+		n += 2;
+		index++;
 		if ((c = *ctx->fmt++) == '}')
 			return 1;
 		if (c != ',' || n >= SNFMT_NAMEMAX)
@@ -278,17 +281,24 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 			va_end(ctx.ap);
 			goto copy_and_continue;
 		case '%':
-			snfmt_scanpct(&ctx, name, arg);
+			if (!snfmt_scanpct(&ctx, name, arg)) {
+			fmt_err:
+				ret = snprintf(p, n, "(err)");
+				break;
+			}
 			if ((ret = func(p, n, name, arg)))
 				break;
+
 			ofmtsize = ctx.fmt - fmt;
-			if (ofmtsize >= SNFMT_FMTMAX) {
-				fprintf(stderr, "%s: %s: too long\n", __func__, fmt);
-				abort();
-			}
+			if (ofmtsize >= SNFMT_FMTMAX)
+				goto fmt_err;
+
 			memcpy(ofmt, fmt, ofmtsize);
 			ofmt[ofmtsize] = 0;
+
 			ret = vsnprintf(p, n, ofmt, ap);
+			if (ret == -1)
+				goto fmt_err;
 		}
 
 		p += ret;
