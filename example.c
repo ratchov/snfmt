@@ -29,7 +29,7 @@ static size_t hexdump_fmt(char *buf, size_t size, unsigned char *blob, size_t bl
 {
 	char *p = buf, *end = buf + size;
 	const char *sep = "";
-	int i;
+	size_t i;
 
 	for (i = 0; i < blob_size; i++) {
 		p += snprintf(p, p < end ? end - p : 0, "%s%02x", sep, blob[i]);

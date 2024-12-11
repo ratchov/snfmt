@@ -246,8 +246,8 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 	union snfmt_arg arg[SNFMT_NARG];
 	char name[SNFMT_NAMEMAX], ofmt[SNFMT_FMTMAX];
 	char *p = buf, *end = buf + bufsz;
-	size_t n, ofmtsize, ret;
-	int c;
+	size_t n, ofmtsize;
+	int c, ret;
 
 	while ((c = *fmt) != 0) {
 
