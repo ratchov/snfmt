@@ -31,8 +31,8 @@ defined as follows:
 
         int myfunc(char *buf, size_t size, const char *fmt, union snfmt_arg *arg);
 
-The `arg` array contains a copy of the values fetched from the `snfmt()`
-variable argument list, they correspond to the specifiers list in the curly
+The `arg` array contains the values fetched from the `snfmt()` variadic
+argument list, they correspond to the specifiers list in the curly
 brackets. The `fmt` string is set to the string between curly brackets with
 the flags and modifiers removed (ex. `%08llx` is replaced by `%x`). The `fmt`
 string will be used by `myfunc` to determine the conversion to perform; if
