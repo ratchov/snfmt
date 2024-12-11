@@ -75,6 +75,8 @@ Example (pseudo-code) of typical use:
             ...
     }
 
-## Restrictions
+## Limitations
 
-Argument indexes (ex. `5$`) and `%n` are not supported.
+Argument reordering (a.k.a `n$` immediately after the `%` character) is
+not supported. The `%n` conversion specifier has serious security
+implications and is not suppoted.
