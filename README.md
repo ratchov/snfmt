@@ -29,13 +29,15 @@ defined as follows:
                 void *p;
         };
 
-        size_t myfunc(char *buf, size_t size, const char *fmt, union snfmt_arg *arg);
+        int myfunc(char *buf, size_t size, const char *fmt, union snfmt_arg *arg);
 
 The `arg` array contains a copy of the values fetched from the `snfmt()`
 variable argument list, they correspond to the specifiers list in the curly
 brackets. The `fmt` string is set to the string between curly brackets with
 the flags and modifiers removed (ex. `%08llx` is replaced by `%x`). The `fmt`
-string will be used inside `myfunc` to determine the conversion to perform.
+string will be used by `myfunc` to determine the conversion to perform; if
+no conversion could be performed, it should return -1, informing `snfmt()`
+to call `snprintf()` instead.
 
 As for `snprintf()`, `snfmt()` and the call-back function write at
 most `size - 1` characters to `buf`, followed by a terminating 0. If `size` is
@@ -51,14 +53,14 @@ not supported.
 
 Example (pseudo-code) of typical use:
 
-        size_t myfunc(char *str, size_t size, const char *fmt, union snfmt_arg *args)
+        int myfunc(char *str, size_t size, const char *fmt, union snfmt_arg *args)
         {
                 if (strcmp(fmt, "myobj:%p") == 0) {
                         ... /* convert using args[0].p */
                 } else if (strcmp(fmt, "hexdump:%p,%u") == 0) {
                         ... /* convert using args[0].p and args[1].u */
                 } else
-                        return 0;
+                        return -1;
         }
 
         void debug(const char *fmt, ...)

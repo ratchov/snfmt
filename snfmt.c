@@ -227,7 +227,7 @@ snfmt_scanfunc(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
  * Format the given string using snprintf(3)-style semantics, allowing
  * {}-based extensions (ex. "{foobar:%p}").
  */
-size_t
+int
 snfmt(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, ...)
 {
 	va_list ap;
@@ -239,7 +239,7 @@ snfmt(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, ...)
 	return len;
 }
 
-size_t
+int
 snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 {
 	struct snfmt_ctx ctx;
@@ -275,7 +275,7 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 		switch (c) {
 		case '{':
 			if (snfmt_scanfunc(&ctx, name, arg)) {
-				if ((ret = func(p, n, name, arg)))
+				if ((ret = func(p, n, name, arg)) != -1)
 					break;
 			}
 			va_end(ctx.ap);
@@ -286,7 +286,7 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 				ret = snprintf(p, n, "(err)");
 				break;
 			}
-			if ((ret = func(p, n, name, arg)))
+			if ((ret = func(p, n, name, arg)) != -1)
 				break;
 
 			ofmtsize = ctx.fmt - fmt;

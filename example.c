@@ -68,13 +68,13 @@ static size_t uchar_fmt(char *buf, size_t bufsz, int c)
 	return snprintf(buf, bufsz, "%s", ustr);
 }
 
-static size_t fmt_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
+static int fmt_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
 {
 	if (strcmp(fmt, "hexdump:%p,%u") == 0)
 		return hexdump_fmt(buf, size, args[0].p, args[1].u);
 	if (strcmp(fmt, "%c") == 0)
 		return uchar_fmt(buf, size, args[0].i);
-	return 0;
+	return -1;
 }
 
 /*
