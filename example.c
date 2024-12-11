@@ -99,7 +99,7 @@ int main(void)
 	/* prints: <Hello world!>, 10, 0xa */
 	logx("<%s>, %03d, 0x%02x 0%04o %.15g", "Hello world!", 10, 10, 10, 1. / 7);
 
-	/* prints: the first point is a(1,2) */
+	/* prints: aa, bb, cc, cc */
 	logx("blob: {hexdump:%p,%zu}", blob, sizeof(blob));
 
 	/* unicode chars */
