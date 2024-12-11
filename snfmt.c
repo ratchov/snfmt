@@ -99,6 +99,10 @@ snfmt_scanpct(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 	 * parse optional size specifier (l, ll, z, ...)
 	 */
 	switch ((c = *ctx->fmt++)) {
+	case 'L':
+		c = *ctx->fmt++;
+		size = sizeof(long double);
+		break;
 	case 'l':
 		c = *ctx->fmt++;
 		if (c == 'l') {
@@ -156,7 +160,10 @@ snfmt_scanpct(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 	case 'F':
 	case 'g':
 	case 'G':
-		arg->f = va_arg(ctx->ap, double);
+		if (size == sizeof(double))
+			arg->f = va_arg(ctx->ap, double);
+		else
+			arg->f = va_arg(ctx->ap, long double);
 		break;
 	case 's':
 	case 'p':
