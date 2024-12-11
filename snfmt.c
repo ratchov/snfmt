@@ -283,8 +283,9 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 		case '%':
 			if (!snfmt_scanpct(&ctx, name, arg)) {
 			fmt_err:
-				ret = snprintf(p, n, "(err)");
-				break;
+				p += snprintf(p, n, "(err)");
+				va_end(ctx.ap);
+				return p - buf;
 			}
 			if ((ret = func(p, n, name, arg)) != -1)
 				break;
