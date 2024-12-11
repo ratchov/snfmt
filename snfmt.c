@@ -119,6 +119,11 @@ snfmt_scanpct(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 		c = *ctx->fmt++;
 		size = sizeof(size_t);
 		break;
+	case 'h':
+		c = *ctx->fmt++;
+		if (c == 'h')
+			c = *ctx->fmt++;
+		/* FALLTHROUGH */
 	default:
 		size = sizeof(int);
 	}
