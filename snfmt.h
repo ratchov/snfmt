@@ -47,6 +47,6 @@ size_t snfmt_va(snfmt_func *, char *, size_t, const char *, va_list);
  * unreachable call to snprintf() on which MSVC performs the checks.
  */
 #define snfmt(cb, p, n, ...) \
-	(0 ? (size_t)snprintf((p), (n), __VA_ARGS__) : snfmt((cb), (p), (n), __VA_ARGS__))
+	(0 ? (size_t)snprintf((p), (n), ## __VA_ARGS__) : snfmt((cb), (p), (n), ## __VA_ARGS__))
 
 #endif
