@@ -77,7 +77,6 @@ Example (pseudo-code) of typical use:
 
 ## Restrictions
 
-Argument indexes (ex. `5$`) are not supported. Width or precision
-may not be passed as arguments with the `*` character. Wide characters
-are not supported. `%A`, `%D`, `%E`, `%F`, `%G`, `%O`, `%S` `%U`, `%X`,
-and `%n` are not supported.
+Argument indexes (ex. `5$`). Width or precision may not be passed as arguments
+with the `*` character. Wide characters are not supported. `%A`, `%D`, `%E`,
+`%F`, `%G`, `%O`, `%S` `%U`, `%X`, and `%n` are not supported.

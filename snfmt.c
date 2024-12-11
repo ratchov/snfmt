@@ -49,6 +49,21 @@ struct snfmt_ctx {
 };
 
 /*
+ * Skip %'s width or precision: * or unsigned decimal
+ */
+static void
+snfmt_scanparam(struct snfmt_ctx *ctx)
+{
+	if (*ctx->fmt == '*') {
+		va_arg(ctx->ap, int);
+		ctx->fmt++;
+	} else {
+		while (*ctx->fmt >= '0' && *ctx->fmt <= '9')
+			ctx->fmt++;
+	}
+}
+
+/*
  * Parse a %-based conversion specifier and convert its va_list argument
  * to union snfmt_arg. Return the number of chars produced in 'name'.
  */
@@ -62,19 +77,28 @@ snfmt_scanpct(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 	ctx->fmt++;
 
 	/*
-	 * skip common flags, width, and precision modifiers
+	 * skip flags, width and precision
 	 */
 	while (1) {
-		c = *ctx->fmt++;
-		if (c != ' ' && c != '#' && c != '+' && c != '-' &&
-		    c != '.' && !(c >= '0' && c <= '9'))
+		c = *ctx->fmt;
+		if (c != ' ' && c != '#' && c != '+' && c != '-' && c != '0')
 			break;
+		ctx->fmt++;
+	}
+
+	/*
+	 * width and precision
+	 */
+	snfmt_scanparam(ctx);
+	if (*ctx->fmt == '.') {
+		ctx->fmt++;
+		snfmt_scanparam(ctx);
 	}
 
 	/*
 	 * parse optional size specifier (l, ll, z, ...)
 	 */
-	switch (c) {
+	switch ((c = *ctx->fmt++)) {
 	case 'l':
 		c = *ctx->fmt++;
 		if (c == 'l') {
