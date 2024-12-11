@@ -1,23 +1,25 @@
-# snfmt - extensible snprintf-like conversion
+# snfmt - user-defined conversions for snprintf()
 
 ## Description
 
-The `snfmt()` function produces a string according to the given format,
-similarly to `snprintf()`. Custom conversions may be used between curly
-brackets. They are performed by the call-back function passed as the
-first `snfmt()` argument.
+The `snfmt()` function formats strings by calling `snprintf()`, but
+allows the caller to define additional conversions. For each occurrence of
+an user-defined conversion in the format string, `snfmt()` invokes the
+user-provided call-back function that implements the conversions.
 
-Example:
+Examples:
 
     snfmt(myfunc, buf, size, "x = %d, ptr = {myobj:%p}", x, ptr);
     snfmt(myfunc, buf, size, "blob = {hexdump:%p,%u}", blob, sizeof(blob));
 
-Custom conversion specifiers (ex. `"myobj:%p"`) are composed by a name,
-and an optional colon followed by a comma-separated list of %-based
-specifiers.
+The user-defined conversion specifiers in the format strings are between
+curly brackets. They are composed by a name, and an optional colon followed
+by a comma-separated list of `%`-based specifiers that match `snfmt()`
+variadic arguments. This syntax makes `snfmt()` format strings work
+with `snprintf()` as well, allowing compilers to report format string errors.
 
-The call-back function is called by `snfmt()` whenever a custom
-conversion needs to be performed. Its prototype is as follows:
+The call-back function is passed as the first `snfmt()` argument. It is
+defined as follows:
 
     union snfmt_arg {
             long long i;
@@ -32,8 +34,8 @@ conversion needs to be performed. Its prototype is as follows:
 The `arg` array contains a copy of the values fetched from the `snfmt()`
 variable argument list, they correspond to the specifiers list in the curly
 brackets. The `fmt` string is set to the string between curly brackets with
-the modifiers removed (ex. `%08llx` is replaced by `%x`). So `fmt` can be used
-inside `myfunc` to determine the conversion to perform.
+the flags and modifiers removed (ex. `%08llx` is replaced by `%x`). The `fmt`
+string will be used inside `myfunc` to determine the conversion to perform.
 
 As for `snprintf()`, `snfmt()` and the call-back function write at
 most `size - 1` characters to `buf`, followed by a terminating 0. If `size` is
