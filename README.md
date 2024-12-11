@@ -77,6 +77,5 @@ Example (pseudo-code) of typical use:
 
 ## Limitations
 
-Argument reordering (a.k.a `n$` immediately after the `%` character) is
-not supported. The `%n` conversion specifier has serious security
-implications and is not suppoted.
+Argument reordering (a.k.a `<number>$` immediately after the `%` character) is
+not supported.
