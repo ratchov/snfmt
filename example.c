@@ -92,9 +92,6 @@ void logx(const char *fmt, ...)
 	fprintf(stderr, "%s\n", buf);
 }
 
-#define logx(...) \
-	(0 ? (void)snprintf(NULL, 0, ## __VA_ARGS__) : logx(__VA_ARGS__))
-
 int main(void)
 {
 	unsigned char blob[] = {0xaa, 0xbb, 0xcc, 0xcc};
@@ -117,11 +114,12 @@ int main(void)
 	/* unknown tag */
 	logx("{unknown}, {unknown:%s}", "hello!");
 
-	/* bad */
-	logx("bad fmt: %y, {hexdump:%y} %d", 123);
 
 	/* overflow */
 	logx("oveflow %000000000000000000000000000000d, %d", 1, 123);
+
+	/* bad */
+	logx("bad fmt: %y, {hexdump:%y} %d", 123);
 
 	return 0;
 }
