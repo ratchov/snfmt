@@ -246,8 +246,8 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 	struct snfmt_ctx ctx;
 	union snfmt_arg arg[SNFMT_NARG];
 	char name[SNFMT_NAMEMAX], ofmt[SNFMT_FMTMAX];
-	char *p = buf, *end = buf + bufsz;
-	size_t n, ofmtsize;
+	char *wptr = buf, *end = buf + bufsz;
+	size_t avail, ofmtsize;
 	int c, ret;
 
 	/* we return an int */
@@ -266,21 +266,21 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 			/* FALLTHROUGH */
 		default:
 		copy_and_continue:
-			if (p < end)
-				*p = c;
-			p++;
+			if (wptr < end)
+				*wptr = c;
+			wptr++;
 			fmt++;
 			continue;
 		}
 
 		ctx.fmt = fmt;
 		va_copy(ctx.ap, ap);
-		n = p < end ? end - p : 0;
+		avail = wptr < end ? end - wptr : 0;
 
 		switch (c) {
 		case '{':
 			if (snfmt_scanfunc(&ctx, name, arg)) {
-				if ((ret = func(p, n, name, arg)) != -1)
+				if ((ret = func(wptr, avail, name, arg)) != -1)
 					break;
 			}
 			va_end(ctx.ap);
@@ -288,26 +288,25 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 		case '%':
 			if (!snfmt_scanpct(&ctx, name, arg)) {
 			fmt_err:
-				p += snprintf(p, n, "(err)");
+				wptr += snprintf(wptr, avail, "(err)");
 				va_end(ctx.ap);
-				return p - buf;
+				return wptr - buf;
 			}
-			if ((ret = func(p, n, name, arg)) != -1)
+			if ((ret = func(wptr, avail, name, arg)) != -1)
 				break;
 
 			ofmtsize = ctx.fmt - fmt;
-			if (ofmtsize >= SNFMT_FMTMAX)
+			if (ofmtsize >= sizeof(ofmt))
 				goto fmt_err;
-
 			memcpy(ofmt, fmt, ofmtsize);
 			ofmt[ofmtsize] = 0;
 
-			ret = vsnprintf(p, n, ofmt, ap);
+			ret = vsnprintf(wptr, avail, ofmt, ap);
 			if (ret == -1)
 				goto fmt_err;
 		}
 
-		p += ret;
+		wptr += ret;
 		fmt = ctx.fmt;
 		va_copy(ap, ctx.ap);
 		va_end(ctx.ap);
@@ -317,7 +316,7 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 	 * add terminating '\0'
 	 */
 	if (bufsz > 0)
-		*(p < end ? p : end - 1) = 0;
+		*(wptr < end ? wptr : end - 1) = 0;
 
-	return p - buf;
+	return wptr - buf;
 }
