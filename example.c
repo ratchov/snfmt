@@ -37,7 +37,7 @@ static size_t hexdump_fmt(char *buf, size_t size, unsigned char *blob, size_t bl
 /*
  * add the 'hexdump' conversion to logx()
  */
-static int logx_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
+static int debug_fmt(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
 {
 	if (strcmp(fmt, "hexdump:%p,%u") == 0)
 		return hexdump_fmt(buf, size, args[0].p, args[1].u);
@@ -47,13 +47,13 @@ static int logx_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *arg
 /*
  * log on stderr using snfmt()
  */
-static void logx(const char *fmt, ...)
+static void debug(const char *fmt, ...)
 {
 	va_list ap;
-	char buf[64];
+	char buf[256];
 
 	va_start(ap, fmt);
-	snfmt_va(logx_cb, buf, sizeof(buf), fmt, ap);
+	snfmt_va(debug_fmt, buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
 	fputs(buf, stderr);
@@ -65,7 +65,7 @@ int main(void)
 	int x = 123;
 
 	/* example including user-defined format */
-	logx("x = %d, blob = [{hexdump:%p,%zu}]\n", x, blob, sizeof(blob));
+	debug("x = %d, blob = [{hexdump:%p,%zu}]\n", x, blob, sizeof(blob));
 
 	return 0;
 }

@@ -56,12 +56,12 @@ probably others).
 
 Example (pseudo-code) of typical use:
 
-        int myfunc(char *str, size_t size, const char *fmt, union snfmt_arg *args)
+        int debug_fmt(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
         {
-                if (strcmp(fmt, "myobj:%p") == 0) {
-                        ... /* convert using args[0].p */
-                } else if (strcmp(fmt, "hexdump:%p,%u") == 0) {
-                        ... /* convert using args[0].p and args[1].u */
+                if (strcmp(fmt, "hexdump:%p,%u") == 0) {
+                        /* convert using args[0].p */
+                } else if (...) {
+                        ...
                 } else
                         return -1;
         }
@@ -72,17 +72,15 @@ Example (pseudo-code) of typical use:
                 char buf[256];
 
                 va_start(ap, fmt);
-                snfmt_va(myfunc, buf, sizeof(buf), fmt, ap);
+                snfmt_va(debug_fmt, buf, sizeof(buf), fmt, ap);
                 va_end(ap);
 
-                fprintf(stderr, "%s\n", buf);
+                fputs(buf, stderr);
         }
 
         int main(void)
         {
                 ...
-                debug("ptr = {myobj:%p}", ptr);
-                debug("blob = {hexdump:%p,%zu}", blob, sizeof(blob));
-
+                debug("x = %d, blob = {hexdump:%p,%zu}\n", x, blob, sizeof(blob));
                 ...
         }
