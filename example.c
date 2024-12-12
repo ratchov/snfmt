@@ -13,17 +13,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <errno.h>
 #include <stdio.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include "snfmt.h"
 
 /*
- * convert binary blob
+ * convert the binary blob to string
  */
 static size_t hexdump_fmt(char *buf, size_t size, unsigned char *blob, size_t blob_size)
 {
@@ -40,40 +35,12 @@ static size_t hexdump_fmt(char *buf, size_t size, unsigned char *blob, size_t bl
 }
 
 /*
- * same as %c, but with unicode allowed
+ * add the 'hexdump' conversion to logx()
  */
-static size_t uchar_fmt(char *buf, size_t bufsz, int c)
-{
-	char ustr[8], *p = ustr;
-
-	if ((c > 0xd7ff && c < 0xe000) || c > 0x10ffff)
-		return 0;
-
-	if (c < 0x80) {
-		*p++ = c;
-	} else if (c < 0x800) {
-		*p++ = 0xc0 | (c >> 6);
-		*p++ = 0x80 | (c & 0x3f);
-	} else if (c < 0x10000) {
-		*p++ = 0xe0 | (c >> 12);
-		*p++ = 0x80 | ((c >> 6) & 0x3f);
-		*p++ = 0x80 | (c & 0x3f);
-	} else {
-		*p++ = 0xf0 | (c >> 18);
-		*p++ = 0x80 | ((c >> 12) & 0x3f);
-		*p++ = 0x80 | ((c >> 6) & 0x3f);
-		*p++ = 0x80 | (c & 0x3f);
-	}
-	*p++ = 0;
-	return snprintf(buf, bufsz, "%s", ustr);
-}
-
-static int fmt_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
+static int logx_cb(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
 {
 	if (strcmp(fmt, "hexdump:%p,%u") == 0)
 		return hexdump_fmt(buf, size, args[0].p, args[1].u);
-	if (strcmp(fmt, "%c") == 0)
-		return uchar_fmt(buf, size, args[0].i);
 	return -1;
 }
 
@@ -86,40 +53,19 @@ static void logx(const char *fmt, ...)
 	char buf[64];
 
 	va_start(ap, fmt);
-	snfmt_va(fmt_cb, buf, sizeof(buf), fmt, ap);
+	snfmt_va(logx_cb, buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
-	fprintf(stderr, "%s\n", buf);
+	fputs(buf, stderr);
 }
 
 int main(void)
 {
 	unsigned char blob[] = {0xaa, 0xbb, 0xcc, 0xcc};
+	int x = 123;
 
-	/* prints: <Hello world!>, 10, 0xa */
-	logx("<%s>, %03d, 0x%02x 0%04o %.15g", "Hello world!", 10, 10, 10, 1. / 7);
-
-	/* handling of *-based width and precision */
-	logx("%0*.*g", 15, 3, 1. / 7);
-
-	/* prints: aa, bb, cc, cc */
-	logx("blob: {hexdump:%p,%zu}", blob, sizeof(blob));
-
-	/* unicode chars */
-	logx("chars: %% (pct), %c (pi), %c (m acute), %c (chess queen)", 0x3c0, 0x1e3f, 0x1fa01);
-
-	/* truncated string */
-	logx("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
-
-	/* unknown tag */
-	logx("{unknown}, {unknown:%s}", "hello!");
-
-
-	/* overflow */
-	logx("oveflow %000000000000000000000000000000d, %d", 1, 123);
-
-	/* bad */
-	logx("bad fmt: %y, {hexdump:%y} %d", 123);
+	/* example including user-defined format */
+	logx("x = %d, blob = [{hexdump:%p,%zu}]\n", x, blob, sizeof(blob));
 
 	return 0;
 }
