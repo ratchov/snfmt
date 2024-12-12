@@ -59,7 +59,7 @@ Example (pseudo-code) of typical use:
         int debug_fmt(char *buf, size_t size, const char *fmt, union snfmt_arg *args)
         {
                 if (strcmp(fmt, "hexdump:%p,%u") == 0) {
-                        /* convert using args[0].p */
+                        /* convert using args[0].p and args[1].u */
                 } else if (...) {
                         ...
                 } else
