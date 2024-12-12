@@ -87,9 +87,6 @@ snfmt_scanpct(struct snfmt_ctx *ctx, char *name, union snfmt_arg *arg)
 		ctx->fmt++;
 	}
 
-	/*
-	 * width and precision
-	 */
 	snfmt_scanparam(ctx);
 	if (*ctx->fmt == '.') {
 		ctx->fmt++;
