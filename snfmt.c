@@ -13,6 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <limits.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -248,6 +249,10 @@ snfmt_va(snfmt_func *func, char *buf, size_t bufsz, const char *fmt, va_list ap)
 	char *p = buf, *end = buf + bufsz;
 	size_t n, ofmtsize;
 	int c, ret;
+
+	/* we return an int */
+	if (bufsz > INT_MAX)
+		bufsz = INT_MAX;
 
 	while ((c = *fmt) != 0) {
 
