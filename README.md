@@ -52,6 +52,13 @@ not supported.
 Non-standard `%`-specifiers are not supported (ex. `%D`, `%O`, `%C`, `%S` and
 probably others).
 
+If `snfmt()` fails to parse the format string (syntax error or unsupported
+`%`-conversion specifier), the output string is truncated, and the size of
+the truncated string is returned.
+
+The size of user-defined conversions is limited to 64 characters. User-defined
+conversions may have at most 8 arguments.
+
 ## Example
 
 Example (pseudo-code) of typical use:
